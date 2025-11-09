@@ -1,65 +1,416 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState, useEffect, useRef, ReactNode } from 'react';
+import Link from 'next/link'; // Import Link from Next.js
+import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Target, Users, BookOpen, Bot, ChevronDown, Sparkles, Shield, ExternalLink } from 'lucide-react';
+
+// --- Types ---
+type Maker = {
+  name: string;
+  role: string;
+  initials: string;
+};
+
+interface SectionHeadingProps {
+  children: ReactNode;
+  subtitle?: string;
+}
+
+interface PortalCardProps {
+  title: string;
+  icon: ReactNode;
+  description: string;
+  cta: string;
+  color: 'amber' | 'blue';
+  delay: number;
+  href: string;
+  isExternal?: boolean;
+}
+
+interface FeatureCardProps {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  delay: number;
+}
+
+interface MakerCardProps {
+  maker: Maker;
+  index: number;
+}
+
+// --- Utility Components ---
+
+const SectionHeading: React.FC<SectionHeadingProps> = ({ children, subtitle }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.5 });
+
+  return (
+    <div ref={ref} className="text-center mb-16">
+      <motion.h2
+        initial={{ opacity: 0, y: 20 }}
+        animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="text-4xl md:text-5xl font-bold text-white mb-4 font-serif tracking-wide"
+      >
+        <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600">
+          {children}
+        </span>
+      </motion.h2>
+      {subtitle && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="text-slate-400 max-w-2xl mx-auto text-lg"
+        >
+          {subtitle}
+        </motion.p>
+      )}
+      <motion.div
+        initial={{ scaleX: 0 }}
+        animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
+        transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
+        className="h-1 w-24 bg-gradient-to-r from-amber-500 to-transparent mx-auto mt-6"
+      />
+    </div>
+  );
+};
+
+// --- Sub-Components ---
+
+const PortalCard: React.FC<PortalCardProps> = ({ title, icon, description, cta, color, delay, href, isExternal = false }) => {
+    const isAmber = color === 'amber';
+    const borderColor = isAmber ? 'group-hover:border-amber-500/50' : 'group-hover:border-blue-500/50';
+    const bgGlow = isAmber ? 'bg-amber-500/5' : 'bg-blue-500/5';
+    const iconBg = isAmber ? 'bg-amber-500/10' : 'bg-blue-500/10';
+    const iconText = isAmber ? 'text-amber-500' : 'text-blue-400';
+    const buttonBg = isAmber ? 'bg-amber-500 hover:bg-amber-400' : 'bg-blue-600 hover:bg-blue-500';
+    const shadow = isAmber ? 'hover:shadow-amber-500/10' : 'hover:shadow-blue-500/10';
+
+    // The inner content of the button
+    const ButtonContent = () => (
+        <>
+            {cta}
+            {isExternal ? <ExternalLink className="ml-2 w-5 h-5 opacity-70"/> : <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform"/>}
+        </>
+    );
+
+    const cardClasses = `w-full py-4 rounded-xl font-bold text-slate-950 text-center flex items-center justify-center transition-all duration-300 ${buttonBg} group-hover:shadow-lg`;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay, duration: 0.8, type: "spring", bounce: 0.3 }}
+            className={`group relative p-8 rounded-3xl border border-slate-800 bg-slate-900/40 backdrop-blur-sm transition-all duration-500 ${borderColor} hover:shadow-2xl ${shadow}`}
+        >
+            <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${bgGlow}`}></div>
+
+            <div className="relative z-10 flex flex-col h-full">
+                <div className={`w-20 h-20 rounded-2xl ${iconBg} ${iconText} flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-300`}>
+                    {icon}
+                </div>
+                <h3 className="text-3xl font-bold text-white mb-4 font-serif">{title}</h3>
+                <p className="text-slate-400 mb-10 flex-grow text-lg leading-relaxed">
+                    {description}
+                </p>
+
+                {/* Conditional rendering: Use Link for internal, <a> for external */}
+                {isExternal ? (
+                    <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cardClasses}
+                    >
+                        <ButtonContent />
+                    </a>
+                ) : (
+                    <Link href={href} className={cardClasses}>
+                        <ButtonContent />
+                    </Link>
+                )}
+            </div>
+        </motion.div>
+    );
+};
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, delay }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-100px" }}
+    transition={{ delay, duration: 0.6 }}
+    className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-slate-600 transition-colors"
+  >
+    <div className="mb-4">{icon}</div>
+    <h4 className="text-xl font-bold text-slate-100 mb-2">{title}</h4>
+    <p className="text-slate-400 leading-relaxed">{description}</p>
+  </motion.div>
+);
+
+const MakerCard: React.FC<MakerCardProps> = ({ maker, index }) => (
+    <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ delay: index * 0.2, duration: 0.5 }}
+        className="flex flex-col items-center text-center p-6"
+    >
+        <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-slate-800 to-slate-700 p-1 mb-4 overflow-hidden relative group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+                src={`/api/placeholder/150/150?text=${maker.initials}`}
+                alt={maker.name}
+                className="w-full h-full rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+            />
+             <div className="absolute inset-0 rounded-full border-2 border-amber-500/0 group-hover:border-amber-500/50 transition-all duration-500 scale-105 group-hover:scale-100"></div>
+        </div>
+        <h4 className="text-xl font-bold text-white font-serif">{maker.name}</h4>
+        <p className="text-amber-500 text-sm font-medium tracking-wider uppercase mt-1">{maker.role}</p>
+    </motion.div>
+);
+
+// --- Data ---
+const makers: Maker[] = [
+    { name: "Maker 1 Name", role: "Lead Developer", initials: "M1" },
+    { name: "Maker 2 Name", role: "UI/UX Designer", initials: "M2" },
+    { name: "Maker 3 Name", role: "Backend Engineer", initials: "M3" },
+];
+
+// --- Main App Component ---
 
 export default function Home() {
+  const [arrowShot, setArrowShot] = useState(false);
+  const targetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setArrowShot(true);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const scrollToPortals = () => {
+    targetRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-amber-500/30">
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px] opacity-50"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-amber-900/20 rounded-full blur-[120px] opacity-40"></div>
+      </div>
+
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center space-x-2"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <Target className="w-8 h-8 text-amber-500" />
+            <span className="text-2xl font-bold tracking-wider text-white font-serif">LAKSHYA</span>
+          </motion.div>
+          <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
+            <a href="#features" className="hover:text-amber-400 transition-colors">Features</a>
+            <a href="#about" className="hover:text-amber-400 transition-colors">Mission</a>
+            <a href="#team" className="hover:text-amber-400 transition-colors">Makers</a>
+            <button
+              onClick={scrollToPortals}
+              className="px-6 py-2 bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-bold rounded-full hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300"
+            >
+              Enter Portal
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <section className="relative z-10 min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center lg:text-left"
+          >
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm mb-6">
+              <Sparkles className="w-4 h-4" />
+              <span>Bridging Legends & Future Leaders</span>
+            </div>
+            <h1 className="text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight font-serif">
+              Your Target, <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-600">
+                Defined.
+              </span>
+            </h1>
+            <p className="text-xl text-slate-400 mb-8 max-w-xl mx-auto lg:mx-0">
+              LAKSHYA is the ultimate platform connecting ambitious students with accomplished alumni. Get mentored, find opportunities, and hit your career goals with precision.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
+              <button
+                onClick={scrollToPortals}
+                className="px-8 py-4 bg-white text-slate-950 text-lg font-bold rounded-full hover:bg-amber-400 transition-all duration-300 flex items-center group"
+              >
+                Start Your Journey
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <a href="#features" className="px-8 py-4 text-white text-lg font-medium rounded-full border border-slate-700 hover:border-amber-500/50 hover:bg-slate-900 transition-all duration-300">
+                Explore Features
+              </a>
+            </div>
+          </motion.div>
+
+          <div className="relative h-[500px] flex items-center justify-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 1 }}
+              className="absolute"
+            >
+               <svg width="300" height="300" viewBox="0 0 100 100" className="opacity-80">
+                  <circle cx="50" cy="50" r="45" stroke="#334155" strokeWidth="0.5" fill="none" />
+                  <circle cx="50" cy="50" r="35" stroke="#475569" strokeWidth="0.5" fill="none" />
+                  <circle cx="50" cy="50" r="25" stroke="#64748b" strokeWidth="1" fill="none" />
+                  <circle cx="50" cy="50" r="15" stroke="#eab308" strokeWidth="2" fill="none" className="drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]" />
+                  <circle cx="50" cy="50" r="5" fill="#eab308" />
+               </svg>
+            </motion.div>
+            <motion.div
+               initial={{ x: -100, opacity: 0 }}
+               animate={{ x: -150, opacity: 1 }}
+               transition={{ duration: 1, delay: 0.2 }}
+               className="absolute left-0 lg:-left-10 h-64 w-32 opacity-40 lg:opacity-100"
+            >
+                <svg viewBox="0 0 100 200" className="w-full h-full stroke-slate-500" fill="none" strokeWidth="2">
+                    <path d="M 90 10 C 20 50, 20 150, 90 190" strokeLinecap="round" />
+                    <motion.line
+                        x1="90" y1="10" x2="90" y2="190"
+                        stroke="#eab308" strokeWidth="1"
+                        initial={{ pathLength: 1, x2: 90 }}
+                        animate={arrowShot ? { pathLength: 1, x: -20 } : { pathLength: 1, x: 0 }}
+                    />
+                </svg>
+            </motion.div>
+            <motion.div
+              initial={{ x: -220, opacity: 0 }}
+              animate={arrowShot ? { x: -15, opacity: [1, 1, 0] } : { x: -220, opacity: 1 }}
+              transition={{
+                  duration: arrowShot ? 0.4 : 0,
+                  ease: "backIn",
+                  opacity: { delay: 0.35, duration: 0.1 }
+              }}
+              className="absolute left-1/2 top-1/2"
+              style={{ marginTop: '-1px', marginLeft: '-50px' }}
+            >
+              <div className="w-[100px] h-[2px] bg-gradient-to-r from-transparent via-amber-300 to-amber-500 relative">
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[12px] border-l-amber-500"></div>
+              </div>
+            </motion.div>
+            <AnimatePresence>
+                {arrowShot && (
+                    <motion.div
+                        initial={{ scale: 0, opacity: 1 }}
+                        animate={{ scale: 2, opacity: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+                        className="absolute w-20 h-20 bg-amber-500/40 rounded-full blur-md"
+                    />
+                )}
+            </AnimatePresence>
+          </div>
+        </div>
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2, duration: 1, repeat: Infinity, repeatType: "reverse" }}
+            className="absolute bottom-10 left-1/2 -translate-x-1/2 text-slate-500"
+        >
+            <ChevronDown className="w-6 h-6" />
+        </motion.div>
+      </section>
+
+      <section id="portals" ref={targetRef} className="relative z-10 py-32 bg-slate-900/50">
+        <div className="max-w-6xl mx-auto px-6">
+          <SectionHeading subtitle="Choose your path. Are you seeking guidance, or are you ready to give back?">
+            Enter The Arena
+          </SectionHeading>
+
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
+            <PortalCard
+              title="Student Path"
+              icon={<Users className="w-12 h-12" />}
+              description="Connect with mentors, unlock exclusive internships, and use AI to map your career to top tech companies."
+              cta="Login as Student"
+              color="blue"
+              delay={0.2}
+              href="/dashboard" // Replace with your actual student portal route later
+              isExternal={false}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <PortalCard
+              title="Alumni Path"
+              icon={<Shield className="w-12 h-12" />}
+              description="Share your wisdom, post opportunities, and stay connected with your alma mater's rising stars."
+              cta="Login as Alumni"
+              color="amber"
+              delay={0.4}
+              href="https://shuchay-2dxa.vercel.app"
+              isExternal={true}
+            />
+          </div>
         </div>
-      </main>
+      </section>
+
+      <section id="features" className="relative z-10 py-32">
+        <div className="max-w-7xl mx-auto px-6">
+          <SectionHeading subtitle="A complete arsenal for career success.">
+            Divine Weapons for Your Career
+          </SectionHeading>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={<Users className="w-8 h-8 text-blue-400" />}
+              title="Alumni Connect"
+              description="Direct access to seniors who have walked the path before you. Schedule 1:1 mentorship sessions."
+              delay={0.1}
+            />
+            <FeatureCard
+              icon={<BookOpen className="w-8 h-8 text-amber-400" />}
+              title="Opportunity Hub"
+              description="Exclusive internships, latest tech news, and curated courses posted directly by industry insiders."
+              delay={0.3}
+            />
+            <FeatureCard
+              icon={<Bot className="w-8 h-8 text-emerald-400" />}
+              title="AI Career Sarthi"
+              description="Our advanced chatbot provides instant, personalized roadmaps to crack your dream companies."
+              delay={0.5}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section id="team" className="relative z-10 py-32 bg-slate-900/50 border-t border-slate-800/50">
+        <div className="max-w-6xl mx-auto px-6">
+          <SectionHeading>The Architects</SectionHeading>
+          <div className="grid md:grid-cols-3 gap-8 justify-center">
+             {makers.map((maker, index) => (
+                 <MakerCard key={index} maker={maker} index={index} />
+             ))}
+          </div>
+        </div>
+      </section>
+
+      <footer className="relative z-10 py-12 bg-slate-950 border-t border-slate-900 text-center text-slate-500">
+        <div className="flex items-center justify-center space-x-2 mb-4 opacity-50 hover:opacity-100 transition-opacity">
+            <Target className="w-6 h-6" />
+            <span className="font-serif font-bold tracking-widest">LAKSHYA</span>
+        </div>
+        <p>© 2025 Lakshya Platform. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
